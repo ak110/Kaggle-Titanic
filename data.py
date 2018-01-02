@@ -10,9 +10,18 @@ TEST_FILE = pathlib.Path('data/test.csv')
 
 
 @tk.log.trace()
-def load_data(data):
+def load_data():
     """データの読み込み＆前処理。"""
-    df = pd.read_csv(str(data)).sort_values('PassengerId')
+    df_train = pd.read_csv(TRAIN_FILE).sort_values('PassengerId')
+    df_test = pd.read_csv(TEST_FILE).sort_values('PassengerId')
+    df_train['source'] = 'train'
+    df_test['source'] = 'test'
+    logger = tk.log.get()
+    logger.info('train = {}, test = {}'.format(len(df_train), len(df_test)))
+
+    # trainとtestをいったんくっつけてから特徴を作る
+    # (統計量などはtestも含んだものを使ってしまう(本当は怪しいけど))
+    df = pd.concat([df_train, df_test], ignore_index=True)
 
     # PassengerId, Survived, Pclass, Name, Sex, Age, SibSp, Parch, Ticket, Fare, Cabin, Embarked
 
@@ -46,21 +55,12 @@ def load_data(data):
 
     # 使わない列の削除
     df.drop(['PassengerId', 'Name', 'Ticket', 'Cabin'], axis=1, inplace=True)
-    return df
 
+    logger.debug('df dtypes, describe, head:\n{}\n\n{}\n\n{}'.format(df.dtypes, df.describe(), df.head()))
 
-@tk.log.trace()
-def load_train_data():
-    """訓練データの読み込み。"""
-    df = load_data(TRAIN_FILE)
-    X = df.drop('Survived', axis=1).values
-    y = df['Survived'].values
-    return X, y
-
-
-@tk.log.trace()
-def load_test_data():
-    """テストデータの読み込み。"""
-    df = load_data(TEST_FILE)
-    X = df.values
-    return X
+    df_train = df.loc[df['source'] == 'train']
+    df_test = df.loc[df['source'] == 'test']
+    X_train = df_train.drop(['Survived', 'source'], axis=1).values
+    y_train = df_train['Survived'].values.astype(int)
+    X_test = df_test.drop(['Survived', 'source'], axis=1).values
+    return (X_train, y_train), X_test

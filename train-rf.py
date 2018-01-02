@@ -2,8 +2,8 @@
 import pathlib
 
 import pandas as pd
-import sklearn.externals.joblib
 import sklearn.ensemble
+import sklearn.externals.joblib
 
 import data
 import pytoolkit as tk
@@ -18,11 +18,10 @@ def _main():
     logger.addHandler(tk.log.stream_handler())
     logger.addHandler(tk.log.file_handler(MODEL_DIR / 'train.log'))
 
-    X_train, y_train = data.load_train_data()
-    X_test = data.load_test_data()
+    (X_train, y_train), X_test = data.load_data()
 
     with tk.log.trace_scope('train+predict'):
-        estimator = sklearn.ensemble.RandomForestClassifier(n_estimators=300, oob_score=True, random_state=71)
+        estimator = sklearn.ensemble.RandomForestClassifier(n_estimators=300, oob_score=True, random_state=71, n_jobs=-1)
         estimator.fit(X_train, y_train)
         sklearn.externals.joblib.dump(estimator, str(MODEL_DIR / 'model.pkl'))
         pred_test = estimator.predict(X_test)

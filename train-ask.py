@@ -18,8 +18,7 @@ def _main():
     logger.addHandler(tk.log.stream_handler())
     logger.addHandler(tk.log.file_handler(MODEL_DIR / 'train.log'))
 
-    X_train, y_train = data.load_train_data()
-    X_test = data.load_test_data()
+    (X_train, y_train), X_test = data.load_data()
 
     with tk.log.trace_scope('train+predict'):
         estimator = autosklearn.classification.AutoSklearnClassifier()
